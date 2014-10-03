@@ -50,6 +50,9 @@ struct ITRIENODE
 {
   itrie *trie;       /* trie */
   ui id;             /* node id */
+  ui depth;          /* depth */
+  ui value;          /* value */
+  itrienode *parent; /* parent */
   itrienode **child; /* children */
 };
 /* new, free, show */

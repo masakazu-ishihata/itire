@@ -79,11 +79,17 @@ Trie 木を構成する節点。
 ### field
 
     itrie *t;
-    int id;
+    ui id;
+    ui depth;
+    ui value;
+    itrinode *parent;
     itrienode **child;
 
 t は自身が所属する Trie。  
-id は節点 ID。
+id は節点 ID。  
+depth は節点の深さ。  
+value は自分の子としてID。  
+parent は自身の親節点。  
 child[i] は i 番目の子節点へのポインタ。
 
 ### new/free

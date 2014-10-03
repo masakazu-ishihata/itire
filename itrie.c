@@ -39,24 +39,31 @@ void itrie_export(FILE *_fp, itrie *_t)
 itrie *itrie_import(const char *_file)
 {
   icsv *csv = icsv_new_delimiter(_file, " ");
-  int n = icsv_num_line(csv);
-  int m = icsv_num_item(csv, 0);
+  int N = icsv_num_line(csv);
+  int M = icsv_num_item(csv, 0);
   int i, j, k;
 
-  /* new */
+  /* new Trie */
   itrie *_t = (itrie *)malloc(sizeof(itrie));
   _t->n = 0;
-  _t->m = m;
-  _t->l = (itrienode **)malloc(n * sizeof(itrienode *));
+  _t->m = M;
+  _t->l = (itrienode **)malloc(N * sizeof(itrienode *));
 
-  for(i=0; i<n; i++)
+  /* new Trienode */
+  itrienode *n, *c;
+  for(i=0; i<N; i++)
     _t->l[i] = itrienode_new(_t);
 
-  for(i=0; i<n; i++){
-    for(j=0; j<m; j++){
+  for(i=0; i<N; i++){
+    for(j=0; j<M; j++){
       k = atoi( icsv_get(csv, i, j) );
       if(k == 0) continue;
-      (_t->l[i])->child[j] = _t->l[k];
+      n = _t->l[i];
+      c = _t->l[k];
+      c->depth = n->depth + 1;
+      c->value = j;
+      c->parent = n;
+      n->child[j] = c;
     }
   }
   _t->r = _t->l[0];
@@ -147,6 +154,9 @@ itrienode *itrienode_new(itrie *_t)
 
   _n->trie   = _t;
   _n->id     = _t->n++;
+  _n->depth  = 0;
+  _n->value  = -1;
+  _n->parent = NULL;
   _n->child  = (itrienode **)malloc(_t->m * sizeof(itrienode *));
   for(i=0; i<(_n->trie)->m; i++)
     _n->child[i] = NULL;
@@ -161,6 +171,9 @@ itrienode *itrienode_open(itrienode *_n, ui _i)
   /* open if not yet */
   if(_n->child[_i] == NULL){
     c = itrienode_new(_n->trie);
+    c->depth = _n->depth + 1;
+    c->value = _i;
+    c->parent = _n;
     _n->child[_i] = c;
   }
 
