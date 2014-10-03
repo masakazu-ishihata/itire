@@ -4,14 +4,15 @@
 /* iTrie */
 /*----------------------------------------------------------------------------*/
 /*------------------------------------*/
-/* new, free, show */
+/* new/free */
 /*------------------------------------*/
-itrie *itrie_new(int _m)
+itrie *itrie_new(ui _m)
 {
   itrie *_t = (itrie *)malloc(sizeof(itrie));
   _t->n = 0;
   _t->m = _m;
-  _t->r = itrienode_new(_t, 0, -1);
+  _t->r = itrienode_new(_t);
+  _t->l = NULL;
   return _t;
 }
 void itrie_free(void *_p)
@@ -22,54 +23,148 @@ void itrie_free(void *_p)
     free(_t);
   }
 }
-void itrie_show(FILE *_fp, itrie *_t)
+/*------------------------------------*/
+/* I/O */
+/*------------------------------------*/
+void itrie_export(FILE *_fp, itrie *_t)
 {
-  fprintf(_fp, "<<<< Trie %p >>>>\n", _t);
-  fprintf(_fp, "Alphabet size = %d\n", _t->m);
-  fprintf(_fp, "Trie size     = %d\n", _t->m);
-  fprintf(_fp, "Adress    Node ID   Depth     Value     Children\n");
-  itrienode_show(_fp, _t->r);
+  int i;
+  itrienode *n;
+
+  for(i=0; i<_t->n; i++){
+    n = itrie_get_node(_t, i);
+    itrienode_export(_fp, n);
+  }
 }
-/*------------------------------------*/
-/* add, match */
-/*------------------------------------*/
-itrienode *itrie_add(itrie *_t, int _l, int *_a)
+itrie *itrie_import(const char *_file)
 {
+  icsv *csv = icsv_new_delimiter(_file, " ");
+  int n = icsv_num_line(csv);
+  int m = icsv_num_item(csv, 0);
+  int i, j, k;
+
+  /* new */
+  itrie *_t = (itrie *)malloc(sizeof(itrie));
+  _t->n = 0;
+  _t->m = m;
+  _t->l = (itrienode **)malloc(n * sizeof(itrienode *));
+
+  for(i=0; i<n; i++)
+    _t->l[i] = itrienode_new(_t);
+
+  for(i=0; i<n; i++){
+    for(j=0; j<m; j++){
+      k = atoi( icsv_get(csv, i, j) );
+      if(k == 0) continue;
+      (_t->l[i])->child[j] = _t->l[k];
+    }
+  }
+  _t->r = _t->l[0];
+
+  return _t;
+}
+
+/*------------------------------------*/
+/* accessors */
+/*------------------------------------*/
+itrienode *itrie_add(itrie *_t, ui _l, ui *_a)
+{
+  /* free old list */
+  if(_t->l != NULL){
+    free(_t->l);
+    _t->l = NULL;
+  }
+
+  /* add */
   return itrienode_add(_t->r, _l, _a);
 }
-itrienode *itrie_match(itrie *_t, int _l, int *_a)
+itrienode *itrie_match(itrie *_t, ui _l, ui *_a)
 {
   return itrienode_match(_t->r, _l, _a);
+}
+void itrie_add_suffix(itrie *_t, ui _l, ui *_a)
+{
+  int i;
+  for(i=0; i<_l; i++) itrie_add(_t, _l-i, &_a[i]);
+}
+void itrie_make_nodelist(itrie *_t)
+{
+  /* delete old list */
+  if(_t->l != NULL) free(_t->l);
+
+  /* make a list */
+  _t->l = (itrienode **)malloc(_t->n * sizeof(itrienode *));
+  itrie_add_nodelist(_t, _t->r);
+}
+void itrie_add_nodelist(itrie *_t, itrienode *_n)
+{
+  int i;
+
+  if(_n != NULL){
+    /* add _n to list */
+    _t->l[_n->id] = _n;
+
+    /* add _n's children to list */
+    for(i=0; i<_t->m; i++)
+      itrie_add_nodelist(_t, _n->child[i]);
+  }
+}
+itrienode *itrie_get_node(itrie *_t, ui _i)
+{
+  if(_t->l == NULL) itrie_make_nodelist(_t);
+  return _t->l[_i];
+}
+
+/*------------------------------------*/
+/* converter */
+/*------------------------------------*/
+ui **itrie_matrix(itrie *_t)
+{
+  int i;
+
+  /* init */
+  ui **A = (ui **)malloc(_t->n * sizeof(ui *));
+  for(i=0; i<_t->n; i++)
+    A[i] = (ui *)calloc(_t->m, sizeof(ui));
+
+  /* fill */
+  itrienode_fill(_t->r, A);
+
+  return A;
 }
 
 /*----------------------------------------------------------------------------*/
 /* iTrie Node */
 /*----------------------------------------------------------------------------*/
 /*------------------------------------*/
-/* new, free, show */
+/* new/free */
 /*------------------------------------*/
 /* new */
-itrienode *itrienode_new(itrie *_t, int _depth, int _value)
+itrienode *itrienode_new(itrie *_t)
 {
   int i;
   itrienode *_n = (itrienode *)malloc(sizeof(itrienode));
 
-  _n->trie  = _t;
-  _n->id    = _t->n++;
-  _n->depth = _depth;
-  _n->value = _value;
-  _n->child = (itrienode **)malloc(_t->m * sizeof(itrienode *));
+  _n->trie   = _t;
+  _n->id     = _t->n++;
+  _n->child  = (itrienode **)malloc(_t->m * sizeof(itrienode *));
   for(i=0; i<(_n->trie)->m; i++)
     _n->child[i] = NULL;
 
   return _n;
 }
 /* open */
-itrienode *itrienode_open(itrienode *_n, int _i)
+itrienode *itrienode_open(itrienode *_n, ui _i)
 {
-  if(_n->child[_i] == NULL)
-    _n->child[_i] = itrienode_new(_n->trie, _n->depth+1, _i);
+  itrienode *c;
 
+  /* open if not yet */
+  if(_n->child[_i] == NULL){
+    c = itrienode_new(_n->trie);
+    _n->child[_i] = c;
+  }
+
+  /* move to child */
   return _n->child[_i];
 }
 /* free */
@@ -85,25 +180,27 @@ void itrienode_free(void *_p)
     free(_n);
   }
 }
-/* show */
-void itrienode_show(FILE *_fp, itrienode *_n)
+
+/*------------------------------------*/
+/* I/O */
+/*------------------------------------*/
+void itrienode_export(FILE *_fp, itrienode *_n)
 {
   int i;
-  fprintf(_fp, "%-10p%-10d%-10d%-10d", _n, _n->id, _n->depth, _n->value);
+  itrienode *c;
 
-  for(i=0; i<(_n->trie)->m; i++)
-    if(_n->child[i] != NULL) fprintf(_fp, "%d:%p ", i, _n->child[i]);
+  for(i=0; i<(_n->trie)->m; i++){
+    c = _n->child[i];
+    fprintf(_fp, " %d",c == NULL ? 0 : c->id);
+  }
   fprintf(_fp, "\n");
-
-  for(i=0; i<(_n->trie)->m; i++)
-    if(_n->child[i] != NULL) itrienode_show(_fp, _n->child[i]);
 }
 
 /*------------------------------------*/
-/* add, match */
+/* accessors */
 /*------------------------------------*/
 /* add : add _a to _n */
-itrienode *itrienode_add(itrienode *_n, int _l, int *_a)
+itrienode *itrienode_add(itrienode *_n, ui _l, ui *_a)
 {
   /* nothing */
   if(_l == 0) return _n;
@@ -112,8 +209,24 @@ itrienode *itrienode_add(itrienode *_n, int _l, int *_a)
   return itrienode_add(itrienode_open(_n, _a[0]), _l-1, &_a[1]);
 }
 /* match */
-itrienode *itrienode_match(itrienode *_n, int _l, int *_a)
+itrienode *itrienode_match(itrienode *_n, ui _l, ui *_a)
 {
+
+  if(_l == 0) return _n;
   int i = _a[0];
-  return _l == 0 || _n->child[i] == NULL ? _n : itrienode_match(_n->child[i], _l-1, &(_a[1]));
+  return _n->child[i] == NULL ? _n : itrienode_match(_n->child[i], _l-1, &(_a[1]));
+}
+/* fill */
+void itrienode_fill(itrienode *_n, ui **_A)
+{
+  int i;
+  itrienode *c;
+
+  for(i=0; i<(_n->trie)->m; i++){
+    c = _n->child[i];
+    if(c != NULL){
+      _A[_n->id][i] = c->id;
+      itrienode_fill(c, _A);
+    }
+  }
 }

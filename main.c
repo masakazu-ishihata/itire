@@ -1,24 +1,27 @@
 #include "main.h"
 
-#define N 3
+#define N 100
+#define V 10
 
 int main(void)
 {
-  int a[N] = {0, 1, 2};
-  int b[N] = {0, 1, 1};
-  int c[N] = {0, 1, 3};
+  int i;
 
-  itrie *t = itrie_new(10);
-  itrienode *n;
-  itrie_show(stdout, t);
+  ui a[N];
+  for(i=0; i<N; i++) a[i] = i % V;
 
-  itrie_add(t, N, a);
-  itrie_add(t, N, b);
-  n = itrie_match(t, N, c);
-  printf("match %d charactors\n", n->depth);
 
-  itrie_show(stdout, t);
-  itrie_free(t);
+  itrie *T = itrie_new(V);
+  itrie_add_suffix(T, N, a);
+
+  FILE *fp = fopen("test.txt", "w");
+  itrie_export(fp, T);
+  fclose(fp);
+  itrie_free(T);
+
+  T = itrie_import("test.txt");
+  itrie_export(stdout, T);
+  itrie_free(T);
 
   return 0;
 }
