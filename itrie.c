@@ -20,6 +20,7 @@ void itrie_free(void *_p)
   itrie *_t = (itrie *)_p;
   if(_t != NULL){
     itrienode_free(_t->r);
+    free(_t->l);
     free(_t);
   }
 }
@@ -55,6 +56,8 @@ void itrie_export_dictionary(FILE *_fp, itrie *_t)
     /* export */
     for(j=0; j<d; j++) fprintf(_fp, " %d", a[j]);
     fprintf(_fp, "\n");
+
+    free(a);
   }
 }
 itrie *itrie_import(const char *_file)
@@ -88,6 +91,9 @@ itrie *itrie_import(const char *_file)
     }
   }
   _t->r = _t->l[0];
+
+  /* free */
+  icsv_free(csv);
 
   return _t;
 }
@@ -208,9 +214,11 @@ void itrienode_free(void *_p)
   itrienode *_n = (itrienode *)_p;
 
   if(_n != NULL){
-    for(i=0; i<(_n->trie)->m; i++)
-      itrienode_free(_n->child[i]);
+    /* free children */
+    for(i=0; i<(_n->trie)->m; i++) itrienode_free(_n->child[i]);
     free(_n->child);
+
+    /* free self */
     free(_n);
   }
 }
