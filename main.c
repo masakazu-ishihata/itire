@@ -20,7 +20,7 @@ int main(void)
   itrie_free(T);
 
   T = itrie_import("test.txt");
-  itrie_export(stdout, T);
+  itrie_export_dictionary(stdout, T);
   itrie_free(T);
 
   return 0;

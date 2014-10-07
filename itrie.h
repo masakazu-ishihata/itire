@@ -28,6 +28,7 @@ itrie *itrie_new(ui _m);
 void itrie_free(void *_p);
 void itrie_show(FILE *_fp, itrie *_t);
 void itrie_export(FILE *_fp, itrie *_t);
+void itrie_export_dictionary(FILE *_fp, itrie *_t);
 itrie *itrie_import(const char *_file);
 
 /* add, match */

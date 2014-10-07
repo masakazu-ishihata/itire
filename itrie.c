@@ -36,6 +36,27 @@ void itrie_export(FILE *_fp, itrie *_t)
     itrienode_export(_fp, n);
   }
 }
+void itrie_export_dictionary(FILE *_fp, itrie *_t)
+{
+  int i, j, d;
+  itrienode *n;
+  ui *a;
+
+  for(i=1; i<_t->n; i++){
+    /* get corresponding word (array of IDs) */
+    n = itrie_get_node(_t, i);
+    d = n->depth;
+    a = (ui *)calloc(d, sizeof(ui));
+    while(n->id > 0){
+      a[n->depth-1] = n->value;
+      n = n->parent;
+    }
+
+    /* export */
+    for(j=0; j<d; j++) fprintf(_fp, " %d", a[j]);
+    fprintf(_fp, "\n");
+  }
+}
 itrie *itrie_import(const char *_file)
 {
   icsv *csv = icsv_new_delimiter(_file, " ");
@@ -204,7 +225,7 @@ void itrienode_export(FILE *_fp, itrienode *_n)
 
   for(i=0; i<(_n->trie)->m; i++){
     c = _n->child[i];
-    fprintf(_fp, " %d",c == NULL ? 0 : c->id);
+    fprintf(_fp, " %d", c == NULL ? 0 : c->id);
   }
   fprintf(_fp, "\n");
 }

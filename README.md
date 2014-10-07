@@ -1,11 +1,14 @@
 # itrie
 
-Trie の実装
+Trie の実装。  
+効率的かどうか怪しい。  
+すべての文字は 0 以上の整数で表現される文字 ID に変化されていると仮定。  
+文字 ID 列を add で Trie に追加し、match で最大 match する場所を返す。  
 
 --------------------------------------------------------------------------------
 ## itrie
 
-Trie 本体の実装
+Trie 本体の実装。
 
 ### field
 
@@ -14,10 +17,10 @@ Trie 本体の実装
     itrienode *r;
     itrienode **l;
 
-n は Trie 中の節点の数。  
+n は Trie 中の節点の総数。  
 m は文字の種類数。  
 r は根節点。  
-l は節点のリスト。
+l は(一時的な)節点のリスト。
 
 ### new, free
 
@@ -31,13 +34,16 @@ Trie _p を free する。
 
 ### I/O
 
-    void itrie_show(FILE *_fp, itrie *_t);
-
-Trie _t を _fp に書き出す。
-
     void itrie_export(FILE *_fp, itrie *_t);
 
-Trie _t を _fp に書き出す。
+Trie _t を _fp に書き出す。  
+出力の i 行目は節点 i の子節点配列である。  
+ただし 0 は対応する子節点が存在しないことを意味する。  
+
+    void itrie_export_dictionary(FILE *_fp, itrie *_t);
+
+Trie _t を _fp に書き出す。  
+出力の i 行目は節点 i が表現する文字 ID 列を表す。
 
     itrie *itrie_import(const char *_file);
 
@@ -47,12 +53,12 @@ _file から Trie を読み込む。
 
     inodelist *itrie_add(itrie *_t, ui _l, ui *_a);
 
-長さ _l の配列 _a を Trie _t に追加する。  
+長さ _l の配列 _a を Trie _t に追加し、  
 _a を表すパスの終点を返す。
 
     inodelist *itrie_match(itrie *_t, ui _l, ui *_a);
 
-長さ _l の配列 _a を Trie _t から探す。  
+長さ _l の配列 _a を Trie _t から探し、  
 最長マッチするパスの終点を返す。
 
     void itrie_add_suffix(itrie *_t, ui _l, ui *_a);
@@ -61,7 +67,10 @@ _a を表すパスの終点を返す。
 
     itrienode *itrie_get_node(itrie *_t, ui _i);
 
-_i 番目の節点へのポインタを返す。
+_i 番目の節点へのポインタを返す。  
+この操作は節点リストを利用するため、  
+最後に節点リスト作ったより後に add が行われている場合、  
+内部的に節点リストの更新を行う。
 
 ### converter
 
@@ -73,8 +82,7 @@ tire _t を表現する _t->n * _t->m 行列を生成する。
 --------------------------------------------------------------------------------
 ## itrienode
 
-Trie 木を構成する節点。
-
+Trie 木を構成する節点の実装。
 
 ### field
 
@@ -118,12 +126,12 @@ _t の
 
     itrienode *itrienode_add(itrienode *_n, ui _l, ui *_a);
 
-長さ _l の配列 _a を節点 _n 以下に追加する。
+長さ _l の配列 _a を節点 _n 以下に追加し、  
 _a を表すパスの終点を返す。
 
     itrienode *itrienode_match(itrienode *_n, ui _l, ui *_a);
 
-長さ _l の配列 _a を節点 _n 以下から探す。
+長さ _l の配列 _a を節点 _n 以下から探し、  
 最長マッチするパスの終点を返す。
 
 
