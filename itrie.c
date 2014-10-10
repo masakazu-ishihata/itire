@@ -265,10 +265,8 @@ void itrienode_fill(itrienode *_n, ui **_A)
   itrienode *c;
 
   for(i=0; i<(_n->trie)->m; i++){
-    c = _n->child[i];
-    if(c != NULL){
-      _A[_n->id][i] = c->id;
-      itrienode_fill(c, _A);
-    }
+    if( (c = _n->child[i]) == NULL ) continue;
+    _A[_n->id][i] = c->id;
+    itrienode_fill(c, _A);
   }
 }

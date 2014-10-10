@@ -6,6 +6,7 @@ int main(void)
 {
   int i;
 
+  /* string */
   char str[N] = "suffix";
   char file[N] = "trie.txt";
 
@@ -39,6 +40,7 @@ int main(void)
 
   /* import */
   T = itrie_import(file);
+  itrie_export(stdout, T);
   itrie_export_dictionary(stdout, T);
   itrie_free(T);
 
