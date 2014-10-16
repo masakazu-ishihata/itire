@@ -34,13 +34,17 @@ int main(void)
 
   /* export */
   FILE *fp = fopen(file, "w");
-  itrie_export(fp, T);
+  printf("<<<< Trie (constructed) >>>>\n");
+  itrie_export_list(stdout, T);
+  itrie_export_louds(fp, T);
   fclose(fp);
   itrie_free(T);
 
   /* import */
-  T = itrie_import(file);
-  itrie_export(stdout, T);
+  T = itrie_import_louds(file);
+  printf("<<<< Trie (imported) >>>>\n");
+  itrie_export_list(stdout, T);
+  printf("<<<< dictionary >>>>\n");
   itrie_export_dictionary(stdout, T);
   itrie_free(T);
 

@@ -1,7 +1,7 @@
 # Makefile
 TAR = test
 CC = gcc -O6 -Wall
-L = -lm -licsv
+L = -lm -licsv -lilouds
 OBJS = main.o itrie.o
 SHAD = -fPIC -shared
 LIB = libitrie.so

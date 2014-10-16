@@ -32,22 +32,33 @@ l は(一時的な)節点のリスト。
 
 Trie _p を free する。
 
-### I/O
+### export / import
 
-    void itrie_export(FILE *_fp, itrie *_t);
+    void itrie_export_matrix(FILE *_fp, itrie *_t);
 
-Trie _t を _fp に書き出す。  
-出力の i 行目は節点 i の子節点配列である。  
+Trie _t を行列形式で _fp に書き出す。  
+出力の i 行 j 列目は節点 i の j 番目の子節点である。  
 ただし 0 は対応する子節点が存在しないことを意味する。  
 
-    void itrie_export_dictionary(FILE *_fp, itrie *_t);
+    void itrie_export_list(FILE *_fp, itrie *_t);
 
-Trie _t を _fp に書き出す。  
-出力の i 行目は節点 i が表現する文字 ID 列を表す。
+Trie _t をリスト _fp に書き出す。  
+出力の i 行目の最初の数字は必ず i であり、以降 a:b 形式のリストである。  
+ここで a:b は i の a 枝に対応する子は b であることを意味する。
 
-    itrie *itrie_import(const char *_file);
 
-_file から Trie を読み込む。
+    void itrie_export_louds(FILE *_fp, itrie *_t);
+
+Trie _t を LOUDS 形式で _fp に書き出す。  
+1行目は木構造を表現する LOUDS のビット列である。  
+2行目の i 番目の数は LOUDS 中の節点 i の Trie での id である。  
+3行めの i 万めの数は LOUDS 中の節点 i の Trie での value である。
+
+    itrie *itrie_import_matrix(const char *_file);
+    itrie *itrie_import_list(const char *_file);
+    itrie *itrie_import_louds(const char *_file);
+
+_file から各形式で出力された Trie を読み込む。
 
 ### accessors
 
@@ -105,7 +116,6 @@ child[i] は i 番目の子節点へのポインタ。
     itrienode *itrienode_new(itrie *_t);
 
 Trie _t に属する節点を生成する。  
-_t の
 
     itrienode *itrienode_open(itrienode *_n, ui _i);
 
